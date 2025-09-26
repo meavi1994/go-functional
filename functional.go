@@ -5,6 +5,10 @@ import (
 	"iter"
 )
 
+func AnyAs[T any](v any) T {
+	return v.(T)
+}
+
 func Map[T, R any](s iter.Seq[T], f func(T) R) iter.Seq[R] {
 	return func(yield func(R) bool) {
 		for v := range s {
