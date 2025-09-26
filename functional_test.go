@@ -2,6 +2,7 @@ package go_functional
 
 import (
 	"iter"
+	"sync"
 	"testing"
 )
 
@@ -114,5 +115,103 @@ func TestAny(t *testing.T) {
 	s := sliceToSeq([]int{1, 3, 5, 6})
 	if !Any(s, func(x int) bool { return x%2 == 0 }) {
 		t.Errorf("expected at least one even")
+	}
+}
+
+func TestSyncKeys(t *testing.T) {
+	m := &sync.Map{}
+	m.Store("a", 1)
+	m.Store("b", 2)
+
+	keys := seqToSlice(SyncKeys[string, int](m))
+
+	expected := map[string]bool{"a": true, "b": true}
+	if len(keys) != len(expected) {
+		t.Fatalf("expected %d keys, got %d", len(expected), len(keys))
+	}
+	for _, k := range keys {
+		if !expected[k] {
+			t.Errorf("unexpected key %s", k)
+		}
+	}
+}
+
+func TestSyncValues(t *testing.T) {
+	m := &sync.Map{}
+	m.Store("a", 1)
+	m.Store("b", 2)
+
+	vals := seqToSlice(SyncValues[string, int](m))
+
+	expected := map[int]bool{1: true, 2: true}
+	if len(vals) != len(expected) {
+		t.Fatalf("expected %d values, got %d", len(expected), len(vals))
+	}
+	for _, v := range vals {
+		if !expected[v] {
+			t.Errorf("unexpected value %d", v)
+		}
+	}
+}
+
+func TestSyncAll(t *testing.T) {
+	m := &sync.Map{}
+	m.Store("a", 1)
+	m.Store("b", 2)
+
+	pairs := []struct {
+		Key string
+		Val int
+	}{}
+
+	SyncAll[string, int](m)(func(k string, v int) bool {
+		pairs = append(pairs, struct {
+			Key string
+			Val int
+		}{k, v})
+		return true
+	})
+
+	expected := map[string]int{"a": 1, "b": 2}
+	if len(pairs) != len(expected) {
+		t.Fatalf("expected %d pairs, got %d", len(expected), len(pairs))
+	}
+	for _, p := range pairs {
+		if expected[p.Key] != p.Val {
+			t.Errorf("for key %s, expected value %d, got %d", p.Key, expected[p.Key], p.Val)
+		}
+	}
+}
+
+func TestSyncGetAllByKeys(t *testing.T) {
+	m := &sync.Map{}
+	m.Store("a", 1)
+	m.Store("b", 2)
+	m.Store("c", 3)
+
+	keys := []string{"a", "c", "x"} // "x" does not exist
+
+	pairs := []struct {
+		Key string
+		Val int
+	}{}
+
+	SyncGetAllByKeys[string, int](m, keys)(func(k string, v int) bool {
+		pairs = append(pairs, struct {
+			Key string
+			Val int
+		}{k, v})
+		return true
+	})
+
+	expected := map[string]int{"a": 1, "c": 3} // only existing keys
+	if len(pairs) != len(expected) {
+		t.Fatalf("expected %d pairs, got %d", len(expected), len(pairs))
+	}
+
+	for _, p := range pairs {
+		if expected[p.Key] != p.Val {
+			t.Errorf("for key %s, expected value %d, got %d", p.Key, expected[p.Key], p.Val)
+		}
 	}
 }

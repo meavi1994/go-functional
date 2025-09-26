@@ -3,6 +3,7 @@ package go_functional
 import (
 	"cmp"
 	"iter"
+	"sync"
 )
 
 func AnyAs[T any](v any) T {
@@ -124,6 +125,47 @@ func Values[K comparable, V any](s iter.Seq2[K, V]) iter.Seq[V] {
 		for _, v := range s {
 			if !yield(v) {
 				return
+			}
+		}
+	}
+}
+
+// SyncKeys converts a sync.Map to an iter.Seq of keys
+func SyncKeys[K comparable, V any](m *sync.Map) iter.Seq[K] {
+	return func(yield func(K) bool) {
+		m.Range(func(k, _ any) bool {
+			return yield(k.(K))
+		})
+	}
+}
+
+// SyncValues converts a sync.Map to an iter.Seq of values
+func SyncValues[K comparable, V any](m *sync.Map) iter.Seq[V] {
+	return func(yield func(V) bool) {
+		m.Range(func(_, v any) bool {
+			return yield(v.(V))
+		})
+	}
+}
+
+// SyncAll converts a sync.Map to an iter.Seq2 of keys and values
+func SyncAll[K comparable, V any](m *sync.Map) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		m.Range(func(k, v any) bool {
+			return yield(k.(K), v.(V))
+		})
+	}
+}
+
+// SyncGetAllByKeys returns an iter.Seq2[K, V] for the given keys in the sync.Map.
+// Skips keys that are not present.
+func SyncGetAllByKeys[K comparable, V any](m *sync.Map, keys []K) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, k := range keys {
+			if v, ok := m.Load(k); ok {
+				if !yield(k, v.(V)) {
+					return
+				}
 			}
 		}
 	}
