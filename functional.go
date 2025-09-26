@@ -102,3 +102,25 @@ func Any[T any](s iter.Seq[T], pred func(T) bool) bool {
 	}
 	return false
 }
+
+// Keys extracts the first element of a Seq2 (the keys).
+func Keys[K comparable, V any](s iter.Seq2[K, V]) iter.Seq[K] {
+	return func(yield func(K) bool) {
+		for k, _ := range s {
+			if !yield(k) {
+				return
+			}
+		}
+	}
+}
+
+// Values extracts the second element of a Seq2 (the values).
+func Values[K comparable, V any](s iter.Seq2[K, V]) iter.Seq[V] {
+	return func(yield func(V) bool) {
+		for _, v := range s {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
