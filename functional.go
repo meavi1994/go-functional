@@ -130,6 +130,20 @@ func Values[K comparable, V any](s iter.Seq2[K, V]) iter.Seq[V] {
 	}
 }
 
+// GetAllByKeys returns an iter.Seq2[K,V] for the given keys in a regular map.
+// Keys that don’t exist in the map are skipped.
+func GetAllByKeys[K comparable, V any](m map[K]V, keys []K) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, k := range keys {
+			if v, ok := m[k]; ok {
+				if !yield(k, v) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // SyncKeys converts a sync.Map to an iter.Seq of keys
 func SyncKeys[K comparable, V any](m *sync.Map) iter.Seq[K] {
 	return func(yield func(K) bool) {

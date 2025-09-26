@@ -215,3 +215,39 @@ func TestSyncGetAllByKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestGetAllByKeys_Map(t *testing.T) {
+	m := map[string]int{
+		"a": 1,
+		"b": 2,
+		"c": 3,
+	}
+
+	keys := []string{"a", "c", "x"} // "x" does not exist
+
+	collected := []struct {
+		Key string
+		Val int
+	}{}
+
+	GetAllByKeys[string, int](m, keys)(func(k string, v int) bool {
+		collected = append(collected, struct {
+			Key string
+			Val int
+		}{k, v})
+		return true
+	})
+
+	// Expected: only existing keys "a" and "c"
+	expected := map[string]int{"a": 1, "c": 3}
+
+	if len(collected) != len(expected) {
+		t.Fatalf("expected %d pairs, got %d", len(expected), len(collected))
+	}
+
+	for _, p := range collected {
+		if expected[p.Key] != p.Val {
+			t.Errorf("for key %s, expected value %d, got %d", p.Key, expected[p.Key], p.Val)
+		}
+	}
+}
