@@ -150,15 +150,14 @@ func Intersection[T comparable](a, b iter.Seq[T]) iter.Seq[T] {
 	}
 }
 
-func IntersectionKeys[K comparable, V any](a, b iter.Seq2[K, V]) iter.Seq[K] {
+// IntersectionKeys returns keys present in both sequences.
+// V1 and V2 can be completely different types.
+func IntersectionKeys[K comparable, V1, V2 any](a iter.Seq2[K, V1], b iter.Seq2[K, V2]) iter.Seq[K] {
 	return func(yield func(K) bool) {
-		// put keys from b into a set
 		set := make(map[K]struct{})
 		for k, _ := range b {
 			set[k] = struct{}{}
 		}
-
-		// yield keys from a that exist in b
 		for k, _ := range a {
 			if _, ok := set[k]; ok {
 				if !yield(k) {
