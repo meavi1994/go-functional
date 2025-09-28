@@ -130,6 +130,45 @@ func Values[K comparable, V any](s iter.Seq2[K, V]) iter.Seq[V] {
 	}
 }
 
+// Intersection returns elements present in both sequences.
+func Intersection[T comparable](a, b iter.Seq[T]) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		// put b into a set for quick lookup
+		set := make(map[T]struct{})
+		for v := range b {
+			set[v] = struct{}{}
+		}
+
+		// yield only those from a that are also in b
+		for v := range a {
+			if _, ok := set[v]; ok {
+				if !yield(v) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func IntersectionKeys[K comparable, V any](a, b iter.Seq2[K, V]) iter.Seq[K] {
+	return func(yield func(K) bool) {
+		// put keys from b into a set
+		set := make(map[K]struct{})
+		for k, _ := range b {
+			set[k] = struct{}{}
+		}
+
+		// yield keys from a that exist in b
+		for k, _ := range a {
+			if _, ok := set[k]; ok {
+				if !yield(k) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // GetAllByKeys returns an iter.Seq2[K,V] for the given keys in a regular map.
 // Keys that don’t exist in the map are skipped.
 func GetAllByKeys[K comparable, V any](m map[K]V, keys []K) iter.Seq2[K, V] {
