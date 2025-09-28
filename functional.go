@@ -168,6 +168,17 @@ func IntersectionKeys[K comparable, V1, V2 any](a iter.Seq2[K, V1], b iter.Seq2[
 	}
 }
 
+// IntersectionSet returns the intersection of keys between a map and a Seq2.
+func IntersectionSet[K comparable, V any](m map[K]struct{}, s iter.Seq2[K, V]) map[K]struct{} {
+	result := make(map[K]struct{})
+	for k, _ := range s {
+		if _, ok := m[k]; ok {
+			result[k] = struct{}{}
+		}
+	}
+	return result
+}
+
 // GetAllByKeys returns an iter.Seq2[K,V] for the given keys in a regular map.
 // Keys that don’t exist in the map are skipped.
 func GetAllByKeys[K comparable, V any](m map[K]V, keys []K) iter.Seq2[K, V] {
